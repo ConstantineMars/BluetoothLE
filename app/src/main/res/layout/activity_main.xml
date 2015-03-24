@@ -17,6 +17,14 @@
             android:layout_height="match_parent" />
 
     </ScrollView>
+
+    <CheckBox android:id="@+id/checkbox"
+        android:text="Bluetooth LE"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"/>
+
     <Button android:id="@+id/scan"
         android:text="scan"
         android:layout_width="wrap_content"

@@ -6,10 +6,13 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import butterknife.OnCheckedChanged;
 import butterknife.OnClick;
 
 
@@ -19,12 +22,14 @@ public class MainActivity extends ActionBarActivity {
     private BluetoothCallbacks callbacks = new BluetoothCallbacks() {
         @Override
         public void start() {
+            checkBox.setEnabled(false);
             text.append("\nscanning...");
             scan.setText("stop");
         }
 
         @Override
         public void stop() {
+            checkBox.setEnabled(true);
             text.append("\nscan stopped");
             scan.setText("scan");
         }
@@ -39,6 +44,8 @@ public class MainActivity extends ActionBarActivity {
     TextView text;
     @InjectView(R.id.scan)
     Button scan;
+    @InjectView(R.id.checkbox)
+    CheckBox checkBox;
 
     private boolean enable = false;
 
@@ -47,12 +54,25 @@ public class MainActivity extends ActionBarActivity {
         connector.scan(!connector.isScanning());
     }
 
+    @OnCheckedChanged(R.id.checkbox)
+    void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+        createConnector(isChecked);
+    }
+
+    private void createConnector(boolean ble) {
+        if (ble) {
+            connector = new BluetoothLEConnector(this, callbacks);
+        } else {
+            connector = new BluetoothClassicConnector(this, callbacks);
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.inject(this);
-        connector = new BluetoothClassicConnector(this, callbacks);
+        createConnector(false);
     }
 
     @Override
