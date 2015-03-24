@@ -2,12 +2,18 @@ package c.mars.bluetoothle;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import timber.log.Timber;
 
@@ -33,15 +39,42 @@ public class BluetoothLEConnector implements BluetoothConnector {
             if (!list.contains(device)) {
                 Timber.d("device: " + device);
                 list.add(device);
-                bleCallbacks.deviceFound(device);
+                callbacks.deviceFound(device);
             }
         }
     };
 
-    private BluetoothCallbacks bleCallbacks;
+    private BluetoothCallbacks callbacks;
+    private BLECallbacks bleCallbacks;
 
-    public BluetoothLEConnector(Context context, BluetoothCallbacks bleCallbacks) {
+    private BluetoothGatt gatt;
+    private BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
+        @Override
+        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+            Timber.d("connection["+gatt.getDevice().getName()+"] state:"+newState+", status:"+status);
+            if (newState == BluetoothProfile.STATE_CONNECTED) {
+                bleCallbacks.connectedToGatt(gatt.getDevice().getName(), status, newState);
+
+                bleCallbacks.discoveringServices();
+                gatt.discoverServices();
+            }
+        }
+
+        @Override
+        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+            List<BluetoothGattService> services = gatt.getServices();
+            bleCallbacks.services(services);
+        }
+
+        @Override
+        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            super.onCharacteristicRead(gatt, characteristic, status);
+        }
+    }
+
+    public BluetoothLEConnector(Context context, BluetoothCallbacks callbacks, BLECallbacks bleCallbacks) {
         this.context = context;
+        this.callbacks = callbacks;
         this.bleCallbacks = bleCallbacks;
         Timber.plant(new Timber.DebugTree());
 
@@ -57,17 +90,36 @@ public class BluetoothLEConnector implements BluetoothConnector {
                 public void run() {
                     scanning = false;
                     adapter.stopLeScan(callback);
-                    bleCallbacks.stop();
+                    callbacks.stop();
                 }
             }, 10000); // 10 sec
             scanning = true;
             adapter.startLeScan(callback);
             adapter.startDiscovery();
-            bleCallbacks.start();
+            callbacks.start();
         } else {
             scanning = false;
             adapter.stopLeScan(callback);
-            bleCallbacks.stop();
+            callbacks.stop();
         }
     }
+
+    public void connect(String address) {
+        BluetoothDevice device = adapter.getRemoteDevice(address);
+        if (device == null) {
+            Timber.e("can't find device "+address);
+            return;
+        }
+
+        bleCallbacks.connectingToGatt(address);
+        gatt = device.connectGatt(context, false, gattCallback);
+    }
+
+    public interface BLECallbacks {
+        void connectingToGatt(String address);
+        void connectedToGatt(String deviceName, int status, int newState);
+        void discoveringServices();
+        void services(List<BluetoothGattService> services);
+    }
+
 }

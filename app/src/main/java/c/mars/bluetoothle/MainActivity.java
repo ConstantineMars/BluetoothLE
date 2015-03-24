@@ -1,6 +1,7 @@
 package c.mars.bluetoothle;
 
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGattService;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -9,6 +10,8 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.TextView;
+
+import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -39,6 +42,29 @@ public class MainActivity extends ActionBarActivity {
             text.append("\ndevice: name:"+device.getName()+", addr:"+device.getAddress()+" uuids:"+device.getUuids()+", type:"+device.getType()+", btclass:"+device.getBluetoothClass()+", state="+device.getBondState());
         }
     };
+    private BluetoothLEConnector.BLECallbacks bleCallbacks = new BluetoothLEConnector.BLECallbacks() {
+        @Override
+        public void connectingToGatt(String address) {
+            text.append("connecting to gatt:"+address);
+        }
+
+        @Override
+        public void connectedToGatt(String deviceName, int status, int newState) {
+            text.append("gatt connected:"+deviceName+"["+status+":"+newState+"]");
+        }
+
+        @Override
+        public void discoveringServices() {
+            text.append("discovering services");
+        }
+
+        @Override
+        public void services(List<BluetoothGattService> services) {
+            for (BluetoothGattService service:services) {
+                text.append(service.getUuid()+": type:"+service.getType()+", chars.size:"+service.getCharacteristics().size());
+            }
+        }
+    };
 
     @InjectView(R.id.text)
     TextView text;
@@ -61,7 +87,7 @@ public class MainActivity extends ActionBarActivity {
 
     private void createConnector(boolean ble) {
         if (ble) {
-            connector = new BluetoothLEConnector(this, callbacks);
+            connector = new BluetoothLEConnector(this, callbacks, bleCallbacks);
         } else {
             connector = new BluetoothClassicConnector(this, callbacks);
         }
@@ -72,7 +98,7 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.inject(this);
-        createConnector(false);
+        createConnector(checkBox.isChecked());
     }
 
     @Override
