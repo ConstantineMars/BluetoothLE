@@ -15,8 +15,8 @@ import butterknife.OnClick;
 
 public class MainActivity extends ActionBarActivity {
 
-    private BLEConnector connector;
-    private BLEConnector.BLECallbacks bleCallbacks = new BLEConnector.BLECallbacks() {
+    private BluetoothConnector connector;
+    private BluetoothCallbacks callbacks = new BluetoothCallbacks() {
         @Override
         public void start() {
             text.append("\nscanning...");
@@ -52,7 +52,7 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.inject(this);
-        connector = new BLEConnector(this, bleCallbacks);
+        connector = new BluetoothClassicConnector(this, callbacks);
     }
 
     @Override

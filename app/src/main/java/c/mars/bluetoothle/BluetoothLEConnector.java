@@ -6,7 +6,6 @@ import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.Message;
 
 import java.util.ArrayList;
 
@@ -15,7 +14,7 @@ import timber.log.Timber;
 /**
  * Created by Constantine Mars on 3/24/15.
  */
-public class BLEConnector {
+public class BluetoothLEConnector implements BluetoothConnector {
     private Context context;
     private BluetoothManager manager;
     private BluetoothAdapter adapter;
@@ -39,9 +38,9 @@ public class BLEConnector {
         }
     };
 
-    private BLECallbacks bleCallbacks;
+    private BluetoothCallbacks bleCallbacks;
 
-    public BLEConnector(Context context, BLECallbacks bleCallbacks) {
+    public BluetoothLEConnector(Context context, BluetoothCallbacks bleCallbacks) {
         this.context = context;
         this.bleCallbacks = bleCallbacks;
         Timber.plant(new Timber.DebugTree());
@@ -63,17 +62,12 @@ public class BLEConnector {
             }, 10000); // 10 sec
             scanning = true;
             adapter.startLeScan(callback);
+            adapter.startDiscovery();
             bleCallbacks.start();
         } else {
             scanning = false;
             adapter.stopLeScan(callback);
             bleCallbacks.stop();
         }
-    }
-
-    public interface BLECallbacks {
-        public void start();
-        public void stop();
-        public void deviceFound(BluetoothDevice device);
     }
 }
