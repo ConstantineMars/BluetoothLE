@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
@@ -14,6 +15,7 @@ import android.os.Looper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import timber.log.Timber;
 
@@ -48,29 +50,72 @@ public class BluetoothLEConnector implements BluetoothConnector {
     private BLECallbacks bleCallbacks;
 
     private BluetoothGatt gatt;
+    private List<BluetoothGattService> services;
+    private List<BluetoothGattCharacteristic> characteristics;
     private BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-            Timber.d("connection["+gatt.getDevice().getName()+"] state:"+newState+", status:"+status);
+            Timber.d("connection[" + gatt.getDevice().getName() + "] state:" + newState + ", status:" + status);
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 bleCallbacks.connectedToGatt(gatt.getDevice().getName(), status, newState);
 
                 bleCallbacks.discoveringServices();
                 gatt.discoverServices();
+            } else {
+                bleCallbacks.log("onConnectionStateChange:["+status+","+newState+"]");
             }
         }
 
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-            List<BluetoothGattService> services = gatt.getServices();
-            bleCallbacks.services(services);
+            bleCallbacks.log("onServicesDiscovered:"+status);
+            services = gatt.getServices();
+            bleCallbacks.log("> [s] services:");
+            for (BluetoothGattService service:services) {
+                bleCallbacks.log("");
+                bleCallbacks.log("> [s] "+service.getUuid()+", type:"+service.getType());
+                bleCallbacks.log(">> [c] characteristics:");
+                List<BluetoothGattCharacteristic> characteristics = service.getCharacteristics();
+                if (!characteristics.isEmpty()) {
+                    for (BluetoothGattCharacteristic characteristic : characteristics) {
+                        byte[] value = characteristic.getValue();
+                        bleCallbacks.log(">> [c] " + characteristic.getUuid() + "=" + (value != null ? value.toString() : "null"));
+
+                        List<BluetoothGattDescriptor> descriptors = characteristic.getDescriptors();
+                        if (!descriptors.isEmpty()) {
+                            bleCallbacks.log(">>> [d] descriptors:");
+                            for (BluetoothGattDescriptor descriptor : descriptors) {
+                                bleCallbacks.log(">>> [d] " + descriptor.getUuid() + "=" + (descriptor.getValue() != null ? descriptor.getValue().toString() : "null"));
+                            }
+                        }
+                    }
+                }
+            }
+//            bleCallbacks.services(services);
         }
 
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            super.onCharacteristicRead(gatt, characteristic, status);
+            bleCallbacks.log("characteristic read: " + characteristic.getUuid() + "=" + characteristic.getValue().toString() + ", status=" + status);
+        }
+
+        @Override
+        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+            bleCallbacks.log("characteristic changed: "+characteristic.getUuid()+"="+characteristic.getValue().toString());
         }
     };
+
+    public void subscribeForNotifications(BluetoothGattCharacteristic characteristic, String descriptorUUID) {
+        gatt.setCharacteristicNotification(characteristic, true);
+
+        BluetoothGattDescriptor descriptor = characteristic.getDescriptor(UUID.fromString(descriptorUUID));
+        descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+        gatt.writeDescriptor(descriptor);
+    }
+
+    public void unSubscribeForNotifications(BluetoothGattCharacteristic characteristic) {
+        gatt.setCharacteristicNotification(characteristic, false);
+    }
 
     public BluetoothLEConnector(Context context, BluetoothCallbacks callbacks, BLECallbacks bleCallbacks) {
         this.context = context;
@@ -122,6 +167,7 @@ public class BluetoothLEConnector implements BluetoothConnector {
         void connectedToGatt(String deviceName, int status, int newState);
         void discoveringServices();
         void services(List<BluetoothGattService> services);
+        void log(String msg);
     }
 
 }

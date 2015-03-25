@@ -80,6 +80,11 @@ public class MainActivity extends ActionBarActivity {
                 addLine("service available: "+service.getUuid()+": type:"+service.getType()+", chars.size:"+service.getCharacteristics().size());
             }
         }
+
+        @Override
+        public void log(String msg) {
+            addLine(msg);
+        }
     };
 
     private void addLine(final String str){
