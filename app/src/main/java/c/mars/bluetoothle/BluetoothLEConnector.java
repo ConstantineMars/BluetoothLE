@@ -70,7 +70,7 @@ public class BluetoothLEConnector implements BluetoothConnector {
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             super.onCharacteristicRead(gatt, characteristic, status);
         }
-    }
+    };
 
     public BluetoothLEConnector(Context context, BluetoothCallbacks callbacks, BLECallbacks bleCallbacks) {
         this.context = context;

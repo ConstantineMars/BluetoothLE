@@ -9,14 +9,32 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_alignParentTop="true"
-        android:layout_above="@+id/scan"
+        android:layout_above="@+id/connect_layout"
         android:background="#ffc">
 
         <TextView android:id="@+id/text"
+            android:textIsSelectable="true"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
     </ScrollView>
+
+    <LinearLayout android:id="@+id/connect_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/scan">
+
+        <Button android:id="@+id/connect"
+            android:text="connect"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <EditText android:id="@+id/address"
+            android:hint="put address here"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
 
     <CheckBox android:id="@+id/checkbox"
         android:text="Bluetooth LE"

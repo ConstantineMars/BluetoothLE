@@ -9,6 +9,7 @@ import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import java.util.List;
@@ -17,6 +18,7 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnCheckedChanged;
 import butterknife.OnClick;
+import timber.log.Timber;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -25,46 +27,66 @@ public class MainActivity extends ActionBarActivity {
     private BluetoothCallbacks callbacks = new BluetoothCallbacks() {
         @Override
         public void start() {
-            checkBox.setEnabled(false);
-            text.append("\nscanning...");
-            scan.setText("stop");
+            addLine("scanning...");
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    checkBox.setEnabled(false);
+                    scan.setText("stop");
+                }
+            });
         }
 
         @Override
         public void stop() {
-            checkBox.setEnabled(true);
-            text.append("\nscan stopped");
-            scan.setText("scan");
+            addLine("scan stopped");
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    checkBox.setEnabled(true);
+                    scan.setText("scan");
+                }
+            });
         }
 
         @Override
         public void deviceFound(BluetoothDevice device) {
-            text.append("\ndevice: name:"+device.getName()+", addr:"+device.getAddress()+" uuids:"+device.getUuids()+", type:"+device.getType()+", btclass:"+device.getBluetoothClass()+", state="+device.getBondState());
+            addLine("device: name:"+device.getName()+", addr:"+device.getAddress()+" uuids:"+device.getUuids()+", type:"+device.getType()+", btclass:"+device.getBluetoothClass()+", state="+device.getBondState());
         }
     };
     private BluetoothLEConnector.BLECallbacks bleCallbacks = new BluetoothLEConnector.BLECallbacks() {
         @Override
         public void connectingToGatt(String address) {
-            text.append("connecting to gatt:"+address);
+            addLine("connecting to gatt:" + address);
         }
 
         @Override
         public void connectedToGatt(String deviceName, int status, int newState) {
-            text.append("gatt connected:"+deviceName+"["+status+":"+newState+"]");
+            addLine("gatt connected:"+deviceName+"["+status+":"+newState+"]");
         }
 
         @Override
         public void discoveringServices() {
-            text.append("discovering services");
+            addLine("discovering services...");
         }
 
         @Override
         public void services(List<BluetoothGattService> services) {
+            addLine("\n");
             for (BluetoothGattService service:services) {
-                text.append(service.getUuid()+": type:"+service.getType()+", chars.size:"+service.getCharacteristics().size());
+                addLine("service available: "+service.getUuid()+": type:"+service.getType()+", chars.size:"+service.getCharacteristics().size());
             }
         }
     };
+
+    private void addLine(final String str){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                text.append("\n"+str);
+            }
+        });
+    }
 
     @InjectView(R.id.text)
     TextView text;
@@ -78,6 +100,18 @@ public class MainActivity extends ActionBarActivity {
     @OnClick(R.id.scan)
     void btnClick() {
         connector.scan(!connector.isScanning());
+    }
+
+    @InjectView(R.id.address)
+    EditText address;
+
+    @OnClick(R.id.connect)
+    void connect(){
+        if (connector instanceof BluetoothLEConnector) {
+            String addr = address.getText().toString();
+            Timber.d("connect to:"+addr);
+            ((BluetoothLEConnector)connector).connect(addr);
+        }
     }
 
     @OnCheckedChanged(R.id.checkbox)
