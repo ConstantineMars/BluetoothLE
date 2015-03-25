@@ -83,8 +83,10 @@ public class BluetoothLEConnector implements BluetoothConnector {
             bleCallbacks.log("onServicesDiscovered:"+status);
 
             bleCallbacks.log("reading device name characteristic...");
-            bleSubscription = new BLESubscription(gatt);
+            bleSubscription = new BLESubscription(gatt, bleCallbacks);
             bleSubscription.requestDeviceName();
+
+            bleSubscription.requestAllCharacteristics();
 
 //            services = gatt.getServices();
 //            bleCallbacks.log("> [s] services:");
@@ -117,8 +119,8 @@ public class BluetoothLEConnector implements BluetoothConnector {
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             String deviceName = BLESubscription.readDeviceName(characteristic);
             if (deviceName == null) {
-                bleCallbacks.log("other: "+bleSubscription.bytesToString(characteristic.getValue()));
-//                bleCallbacks.log("characteristic read: " + characteristic.getUuid() + "=" + (characteristic.getValue() != null ? Arrays.toString(characteristic.getValue()) : "null") + ", status=" + status);
+                bleSubscription.readCharacteristic(characteristic, status);
+//                bleCallbacks.log("characteristic read: "+bleSubscription.bytesToString(characteristic.getValue()));
             } else {
                 bleCallbacks.log("name: "+deviceName);
             }

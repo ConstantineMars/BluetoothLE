@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattServer;
 import android.bluetooth.BluetoothGattService;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -16,9 +17,11 @@ public class BLESubscription {
 
     private BluetoothGatt gatt;
     private BluetoothGattCharacteristic nameCharacteristic;
+    private BluetoothLEConnector.BLECallbacks bleCallbacks;
 
-    public BLESubscription(BluetoothGatt gatt) {
+    public BLESubscription(BluetoothGatt gatt, BluetoothLEConnector.BLECallbacks bleCallbacks) {
         this.gatt = gatt;
+        this.bleCallbacks = bleCallbacks;
     }
 
     public void requestDeviceName() {
@@ -29,6 +32,21 @@ public class BLESubscription {
                 nameCharacteristic = characteristic;
                 gatt.readCharacteristic(nameCharacteristic);
         }
+    }
+
+    public void requestAllCharacteristics() {
+        List<BluetoothGattService> services = gatt.getServices();
+        for(BluetoothGattService service:services){
+            List<BluetoothGattCharacteristic> characteristics = service.getCharacteristics();
+            for (BluetoothGattCharacteristic characteristic:characteristics) {
+                gatt.readCharacteristic(characteristic);
+                bleCallbacks.log("request read for c["+characteristic.getUuid().toString()+"]");
+            }
+        }
+    }
+
+    public void readCharacteristic(BluetoothGattCharacteristic characteristic, int status) {
+        bleCallbacks.log("c["+characteristic+"]: "+bytesToString(characteristic.getValue())+", status:"+status);
     }
 
     public static String readDeviceName(BluetoothGattCharacteristic characteristic) {
