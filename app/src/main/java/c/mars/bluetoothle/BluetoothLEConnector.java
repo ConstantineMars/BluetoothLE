@@ -88,9 +88,11 @@ public class BluetoothLEConnector implements BluetoothConnector {
             handler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    scanning = false;
-                    adapter.stopLeScan(callback);
-                    callbacks.stop();
+                    if (scanning) {
+                        scanning = false;
+                        adapter.stopLeScan(callback);
+                        callbacks.stop();
+                    }
                 }
             }, 10000); // 10 sec
             scanning = true;

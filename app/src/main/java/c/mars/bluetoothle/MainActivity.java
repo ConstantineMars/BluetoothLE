@@ -2,8 +2,11 @@ package c.mars.bluetoothle;
 
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattService;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
@@ -127,12 +130,32 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
+    private static final String PREF_ADDR = "";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.inject(this);
         createConnector(checkBox.isChecked());
+
+        address.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                PreferenceManager.getDefaultSharedPreferences(getApplication()).edit().putString(PREF_ADDR, address.getText().toString()).commit();
+            }
+        });
+        address.setText(PreferenceManager.getDefaultSharedPreferences(getApplication()).getString(PREF_ADDR, ""));
     }
 
     @Override
