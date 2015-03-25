@@ -6,4 +6,5 @@ package c.mars.bluetoothle;
 public interface BluetoothConnector {
     public void scan(boolean enable);
     public boolean isScanning();
+    public void stop();
 }

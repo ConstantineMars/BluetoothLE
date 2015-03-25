@@ -48,6 +48,11 @@ public class BluetoothClassicConnector implements BluetoothConnector {
         return scanning;
     }
 
+    @Override
+    public void stop() {
+
+    }
+
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -60,4 +65,5 @@ public class BluetoothClassicConnector implements BluetoothConnector {
             }
         }
     };
+
 }

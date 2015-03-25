@@ -14,6 +14,7 @@ import android.os.Handler;
 import android.os.Looper;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,6 +30,16 @@ public class BluetoothLEConnector implements BluetoothConnector {
 
     public boolean isScanning() {
         return scanning;
+    }
+
+    @Override
+    public void stop() {
+        if (gatt == null) {
+            return;
+        }
+
+        gatt.close();
+        gatt = null;
     }
 
     boolean scanning = false;
@@ -69,39 +80,49 @@ public class BluetoothLEConnector implements BluetoothConnector {
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             bleCallbacks.log("onServicesDiscovered:"+status);
-            services = gatt.getServices();
-            bleCallbacks.log("> [s] services:");
-            for (BluetoothGattService service:services) {
-                bleCallbacks.log("");
-                bleCallbacks.log("> [s] "+service.getUuid()+", type:"+service.getType());
-                bleCallbacks.log(">> [c] characteristics:");
-                List<BluetoothGattCharacteristic> characteristics = service.getCharacteristics();
-                if (!characteristics.isEmpty()) {
-                    for (BluetoothGattCharacteristic characteristic : characteristics) {
-                        byte[] value = characteristic.getValue();
-                        bleCallbacks.log(">> [c] " + characteristic.getUuid() + "=" + (value != null ? value.toString() : "null"));
 
-                        List<BluetoothGattDescriptor> descriptors = characteristic.getDescriptors();
-                        if (!descriptors.isEmpty()) {
-                            bleCallbacks.log(">>> [d] descriptors:");
-                            for (BluetoothGattDescriptor descriptor : descriptors) {
-                                bleCallbacks.log(">>> [d] " + descriptor.getUuid() + "=" + (descriptor.getValue() != null ? descriptor.getValue().toString() : "null"));
-                            }
-                        }
-                    }
-                }
-            }
-//            bleCallbacks.services(services);
+            bleCallbacks.log("reading device name characteristic...");
+            BluetoothLESubscription.requestDeviceName(gatt);
+//            services = gatt.getServices();
+//            bleCallbacks.log("> [s] services:");
+//            for (BluetoothGattService service:services) {
+//                bleCallbacks.log("");
+//                bleCallbacks.log("> [s] "+service.getUuid()+", type:"+service.getType());
+//                bleCallbacks.log(">> [c] characteristics:");
+//                List<BluetoothGattCharacteristic> characteristics = service.getCharacteristics();
+//                if (!characteristics.isEmpty()) {
+//                    for (BluetoothGattCharacteristic characteristic : characteristics) {
+//                        byte[] value = characteristic.getValue();
+//                        bleCallbacks.log(">> [c] " + characteristic.getUuid() + "=" + (value != null ? value.toString() : "null"));
+//
+//                        if (characteristic.getUuid().equals(UUID.fromString()))
+////                        gatt.readCharacteristic(characteristic);
+//
+//                        List<BluetoothGattDescriptor> descriptors = characteristic.getDescriptors();
+//                        if (!descriptors.isEmpty()) {
+//                            bleCallbacks.log(">>> [d] descriptors:");
+//                            for (BluetoothGattDescriptor descriptor : descriptors) {
+//                                bleCallbacks.log(">>> [d] " + descriptor.getUuid() + "=" + (descriptor.getValue() != null ? descriptor.getValue().toString() : "null"));
+//                            }
+//                        }
+//                    }
+//                }
+//            }
         }
 
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            bleCallbacks.log("characteristic read: " + characteristic.getUuid() + "=" + characteristic.getValue().toString() + ", status=" + status);
+            String deviceName = BluetoothLESubscription.readDeviceName(characteristic);
+            if (deviceName == null) {
+                bleCallbacks.log("characteristic read: " + characteristic.getUuid() + "=" + (characteristic.getValue() != null ? Arrays.toString(characteristic.getValue()) : "null") + ", status=" + status);
+            } else {
+                bleCallbacks.log("name: "+deviceName);
+            }
         }
 
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-            bleCallbacks.log("characteristic changed: "+characteristic.getUuid()+"="+characteristic.getValue().toString());
+            bleCallbacks.log("characteristic changed: "+characteristic.getUuid()+"="+(characteristic.getValue()!=null? Arrays.toString(characteristic.getValue()):"null"));
         }
     };
 
