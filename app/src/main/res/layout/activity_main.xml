@@ -9,7 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_alignParentTop="true"
-        android:layout_above="@+id/connect_layout"
+        android:layout_above="@+id/name_layout"
         android:background="#ffc">
 
         <TextView android:id="@+id/text"
@@ -19,7 +19,26 @@
 
     </ScrollView>
 
+    <LinearLayout android:id="@+id/name_layout"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/connect_layout">
+
+        <Button android:id="@+id/write_name"
+            android:text="write"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <EditText android:id="@+id/name"
+            android:hint="set device name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
+
     <LinearLayout android:id="@+id/connect_layout"
+        android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_above="@+id/scan">

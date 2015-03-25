@@ -122,6 +122,16 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
+    @InjectView(R.id.name)
+    EditText name;
+    @OnClick(R.id.write_name)
+    void writeName() {
+        if (connector instanceof BluetoothLEConnector) {
+            String n = name.getText().toString();
+            ((BluetoothLEConnector)connector).writeDeviceName(n);
+        }
+    }
+
     @OnCheckedChanged(R.id.checkbox)
     void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
         createConnector(isChecked);

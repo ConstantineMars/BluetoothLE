@@ -59,6 +59,7 @@ public class BluetoothLEConnector implements BluetoothConnector {
 
     private BluetoothCallbacks callbacks;
     private BLECallbacks bleCallbacks;
+    private BLESubscription bleSubscription;
 
     private BluetoothGatt gatt;
     private List<BluetoothGattService> services;
@@ -82,7 +83,9 @@ public class BluetoothLEConnector implements BluetoothConnector {
             bleCallbacks.log("onServicesDiscovered:"+status);
 
             bleCallbacks.log("reading device name characteristic...");
-            BluetoothLESubscription.requestDeviceName(gatt);
+            bleSubscription = new BLESubscription(gatt);
+            bleSubscription.requestDeviceName();
+
 //            services = gatt.getServices();
 //            bleCallbacks.log("> [s] services:");
 //            for (BluetoothGattService service:services) {
@@ -112,9 +115,10 @@ public class BluetoothLEConnector implements BluetoothConnector {
 
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            String deviceName = BluetoothLESubscription.readDeviceName(characteristic);
+            String deviceName = BLESubscription.readDeviceName(characteristic);
             if (deviceName == null) {
-                bleCallbacks.log("characteristic read: " + characteristic.getUuid() + "=" + (characteristic.getValue() != null ? Arrays.toString(characteristic.getValue()) : "null") + ", status=" + status);
+                bleCallbacks.log("other: "+bleSubscription.bytesToString(characteristic.getValue()));
+//                bleCallbacks.log("characteristic read: " + characteristic.getUuid() + "=" + (characteristic.getValue() != null ? Arrays.toString(characteristic.getValue()) : "null") + ", status=" + status);
             } else {
                 bleCallbacks.log("name: "+deviceName);
             }
@@ -123,6 +127,11 @@ public class BluetoothLEConnector implements BluetoothConnector {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             bleCallbacks.log("characteristic changed: "+characteristic.getUuid()+"="+(characteristic.getValue()!=null? Arrays.toString(characteristic.getValue()):"null"));
+        }
+
+        @Override
+        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            bleCallbacks.log("characteristic write:"+status);
         }
     };
 
@@ -189,6 +198,10 @@ public class BluetoothLEConnector implements BluetoothConnector {
         void discoveringServices();
         void services(List<BluetoothGattService> services);
         void log(String msg);
+    }
+
+    public void writeDeviceName(String newName){
+        bleSubscription.writeDeviceName(newName);
     }
 
 }
